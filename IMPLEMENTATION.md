@@ -223,7 +223,10 @@ src/
 │   ├── DelegationRequestDTO.php
 │   └── DelegationResponseDTO.php
 ├── Security/
-│   └── JwtAuthenticator.php        # Authentification JWT
+│   ├── JwtAuthenticator.php        # Authentification JWT
+│   └── Voter/
+│       ├── PetVoter.php            # Contrôle d'accès aux Pets (ownership + delegations)
+│       └── DelegationVoter.php     # Contrôle d'accès aux Délégations
 └── Kernel.php
 
 config/
@@ -260,10 +263,28 @@ Les 6 tables principales :
 
 ## 🔒 Sécurité
 
+### Authentification
 - **Hachage des mots de passe** : bcrypt
 - **JWT Token** : RS256 (RSA avec clés privée/publique en `/config/jwt/`)
-- **Ownership Checks** : Vérification que l'utilisateur peut accéder à ses propres ressources
 - **Rôles** : ROLE_USER obligatoire pour accéder à l'API
+
+### Autorisation (RBAC + ABAC via Voters)
+
+La sécurité au niveau des ressources est implémentée via **2 Voters Symfony** :
+
+#### 1. **PetVoter** (`src/Security/Voter/PetVoter.php`)
+Contrôle l'accès aux Pets :
+- **Owner** : Peut TOUT faire (view, edit, delete, feed, play, heal, sleep, bathe)
+- **Caretaker** : Peut faire des soins SEULEMENT SI délégation ACTIVE couvre la date actuelle
+- **Autres** : Accès refusé
+
+#### 2. **DelegationVoter** (`src/Security/Voter/DelegationVoter.php`)
+Contrôle l'accès aux Délégations :
+- **Owner** : Peut voir et révoquer la délégation
+- **Caretaker** : Peut voir et accepter la délégation
+- **Autres** : Accès refusé
+
+**Documentation complète** : Voir [SECURITY_VOTERS.md](SECURITY_VOTERS.md)
 
 ---
 

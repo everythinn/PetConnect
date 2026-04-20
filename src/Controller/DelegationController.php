@@ -7,6 +7,7 @@ use App\DTO\DelegationResponseDTO;
 use App\Repository\DelegationRepository;
 use App\Repository\PetRepository;
 use App\Repository\UserRepository;
+use App\Security\Voter\DelegationVoter;
 use App\Service\DelegationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -109,9 +110,8 @@ class DelegationController extends AbstractController
                 return $this->json(['error' => 'Delegation not found'], Response::HTTP_NOT_FOUND);
             }
 
-            if ($delegation->getCaretaker()->getId() !== $user->getId()) {
-                return $this->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-            }
+            // Check if user can accept this delegation (caretaker only)
+            $this->denyAccessUnlessGranted(DelegationVoter::ACCEPT, $delegation);
 
             $this->delegationService->acceptDelegation($delegation);
 
@@ -141,9 +141,8 @@ class DelegationController extends AbstractController
                 return $this->json(['error' => 'Delegation not found'], Response::HTTP_NOT_FOUND);
             }
 
-            if ($delegation->getOwner()->getId() !== $user->getId()) {
-                return $this->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-            }
+            // Check if user can revoke this delegation (owner only)
+            $this->denyAccessUnlessGranted(DelegationVoter::REVOKE, $delegation);
 
             $this->delegationService->revokeDelegation($delegation);
 

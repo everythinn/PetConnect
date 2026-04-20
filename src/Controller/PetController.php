@@ -6,6 +6,7 @@ use App\DTO\AdoptPetDTO;
 use App\DTO\PetResponseDTO;
 use App\Enum\SpeciesEnum;
 use App\Repository\PetRepository;
+use App\Security\Voter\PetVoter;
 use App\Service\PetService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,6 +15,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Doctrine\Persistence\ManagerRegistry;
 
 #[Route('/api/pets')]
 class PetController extends AbstractController
@@ -103,9 +106,8 @@ class PetController extends AbstractController
             return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($pet->getOwner()->getId() !== $user->getId()) {
-            return $this->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-        }
+        // Check if user can view this pet
+        $this->denyAccessUnlessGranted(PetVoter::VIEW, $pet);
 
         $response = new PetResponseDTO(
             id: $pet->getId(),
@@ -135,9 +137,8 @@ class PetController extends AbstractController
             return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($pet->getOwner()->getId() !== $user->getId()) {
-            return $this->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-        }
+        // Check if user can delete this pet (owner only)
+        $this->denyAccessUnlessGranted(PetVoter::DELETE, $pet);
 
         $this->petService->deletePet($pet);
 

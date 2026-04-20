@@ -18,3 +18,7 @@
 /.phpunit.cache/
 ###< phpunit/phpunit ###
 .env
+compose.yaml
+TEST_PLAN.md
+USEFUL_COMMANDS.md
+.env

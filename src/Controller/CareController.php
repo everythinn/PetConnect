@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\PetRepository;
+use App\Security\Voter\PetVoter;
 use App\Service\PetService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -30,9 +31,8 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            if ($pet->getOwner()->getId() !== $user->getId()) {
-                return $this->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-            }
+            // Check if user can feed this pet (owner or active caretaker)
+            $this->denyAccessUnlessGranted(PetVoter::FEED, $pet);
 
             $this->petService->feedPet($pet, $user);
 
@@ -52,9 +52,8 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            if ($pet->getOwner()->getId() !== $user->getId()) {
-                return $this->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-            }
+            // Check if user can play with this pet (owner or active caretaker)
+            $this->denyAccessUnlessGranted(PetVoter::PLAY, $pet);
 
             $this->petService->playWithPet($pet, $user);
 
@@ -74,9 +73,8 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            if ($pet->getOwner()->getId() !== $user->getId()) {
-                return $this->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-            }
+            // Check if user can heal this pet (owner or active caretaker)
+            $this->denyAccessUnlessGranted(PetVoter::HEAL, $pet);
 
             $this->petService->healPet($pet, $user);
 
@@ -96,9 +94,8 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            if ($pet->getOwner()->getId() !== $user->getId()) {
-                return $this->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-            }
+            // Check if user can make pet sleep (owner or active caretaker)
+            $this->denyAccessUnlessGranted(PetVoter::SLEEP, $pet);
 
             $this->petService->sleepPet($pet, $user);
 
@@ -118,9 +115,8 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            if ($pet->getOwner()->getId() !== $user->getId()) {
-                return $this->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-            }
+            // Check if user can bathe this pet (owner or active caretaker)
+            $this->denyAccessUnlessGranted(PetVoter::BATHE, $pet);
 
             $this->petService->bathePet($pet, $user);
 
