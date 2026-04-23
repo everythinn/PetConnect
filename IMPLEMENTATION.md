@@ -220,8 +220,7 @@ src/
 │   ├── AdoptPetDTO.php
 │   ├── PetResponseDTO.php
 │   ├── CareActionDTO.php
-│   ├── DelegationRequestDTO.php
-│   └── DelegationResponseDTO.php
+│   └── DelegationRequestDTO.php
 ├── Security/
 │   ├── JwtAuthenticator.php        # Authentification JWT
 │   └── Voter/

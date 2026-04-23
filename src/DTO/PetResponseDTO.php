@@ -4,6 +4,9 @@ namespace App\DTO;
 
 class PetResponseDTO
 {
+    /**
+     * @param CareActionResponseDTO[] $careActions
+     */
     public function __construct(
         public readonly int $id,
         public readonly string $name,
@@ -18,6 +21,12 @@ class PetResponseDTO
         public readonly bool $isAlive,
         public readonly string $bornAt,
         public readonly ?string $lastInteractedAt = null,
+        public readonly int $age = 0,
+        public readonly float $xpProgress = 0.0,
+        public readonly array $careActions = [],
+        public readonly ?int $ownerId = null,
     ) {
     }
+
+    public function getOwnerId(): ?int { return $this->ownerId; }
 }

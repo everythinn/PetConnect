@@ -7,6 +7,7 @@ use App\Entity\Pet;
 use App\Entity\User;
 use App\Enum\DelegationStatusEnum;
 use App\Repository\DelegationRepository;
+use App\Service\DelegationService;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
@@ -20,11 +21,13 @@ class PetVoter extends Voter
     public const HEAL = 'HEAL';
     public const SLEEP = 'SLEEP';
     public const BATHE = 'BATHE';
+    public const USE_ITEM = 'USE_ITEM';
 
-    private array $careActions = [self::FEED, self::PLAY, self::HEAL, self::SLEEP, self::BATHE];
+    private array $careActions = [self::FEED, self::PLAY, self::HEAL, self::SLEEP, self::BATHE, self::USE_ITEM];
 
     public function __construct(
         private readonly DelegationRepository $delegationRepository,
+        private readonly DelegationService $delegationService,
     ) {
     }
 
@@ -32,7 +35,7 @@ class PetVoter extends Voter
     {
         return $subject instanceof Pet && in_array($attribute, [
             self::DELETE, self::VIEW, self::EDIT,
-            self::FEED, self::PLAY, self::HEAL, self::SLEEP, self::BATHE
+            self::FEED, self::PLAY, self::HEAL, self::SLEEP, self::BATHE, self::USE_ITEM
         ]);
     }
 
@@ -51,12 +54,12 @@ class PetVoter extends Voter
             return true;
         }
 
-        // Pour les soins, vérifier si une délégation active existe
-        if (in_array($attribute, $this->careActions)) {
+        // Pour VIEW et les soins, vérifier si une délégation active existe
+        if ($attribute === self::VIEW || in_array($attribute, $this->careActions)) {
             return $this->hasActiveDelegation($pet, $user);
         }
 
-        // Pour autres actions, seul le propriétaire peut
+        // Pour autres actions (DELETE, EDIT), seul le propriétaire peut
         return false;
     }
 
@@ -65,18 +68,15 @@ class PetVoter extends Voter
      */
     private function hasActiveDelegation(Pet $pet, User $user): bool
     {
-        $now = new \DateTimeImmutable();
-
-        // Chercher une délégation ACTIVE pour ce pet avec cet utilisateur comme caretaker
+        // Chercher une délégation pour ce pet avec cet utilisateur comme caretaker
         $delegations = $this->delegationRepository->findBy([
             'pet' => $pet,
             'caretaker' => $user,
-            'status' => DelegationStatusEnum::ACTIVE,
         ]);
 
         foreach ($delegations as $delegation) {
-            // Vérifier que la délégation est temporellement valide
-            if ($now >= $delegation->getStartDate() && $now <= $delegation->getEndDate()) {
+            // Vérifier que la délégation est active (en se basant sur les dates et le statut)
+            if ($this->delegationService->calculateDelegationStatus($delegation) === DelegationStatusEnum::ACTIVE) {
                 return true;
             }
         }

@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Enum\ItemEffectEnum;
 use App\Enum\ItemTypeEnum;
 use App\Repository\ItemRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -21,8 +20,8 @@ class Item
     #[ORM\Column(enumType: ItemTypeEnum::class)]
     private ItemTypeEnum $type;
 
-    #[ORM\Column(enumType: ItemEffectEnum::class)]
-    private ItemEffectEnum $effect;
+    #[ORM\Column(length: 255)]
+    private string $effect = '';
 
     #[ORM\Column]
     private int $effectValue = 0;
@@ -59,12 +58,12 @@ class Item
         return $this;
     }
 
-    public function getEffect(): ItemEffectEnum
+    public function getEffect(): string
     {
         return $this->effect;
     }
 
-    public function setEffect(ItemEffectEnum $effect): static
+    public function setEffect(string $effect): static
     {
         $this->effect = $effect;
 

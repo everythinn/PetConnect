@@ -11,4 +11,9 @@ class AuthResponseDTO
         public readonly string $username,
     ) {
     }
+
+    public function getToken(): string { return $this->token; }
+    public function getUserId(): int { return $this->userId; }
+    public function getEmail(): string { return $this->email; }
+    public function getUsername(): string { return $this->username; }
 }

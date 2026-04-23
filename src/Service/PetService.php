@@ -5,7 +5,9 @@ namespace App\Service;
 use App\Entity\CareAction;
 use App\Entity\Pet;
 use App\Entity\User;
+use App\Entity\Item;
 use App\Enum\ActionTypeEnum;
+use App\Enum\ItemTypeEnum;
 use App\Enum\SpeciesEnum;
 use App\Repository\PetRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,6 +21,24 @@ class PetService
         private readonly EntityManagerInterface $entityManager,
         private readonly CareActionService $careActionService,
     ) {
+    }
+
+    /**
+     * Calculate xp needed to reach next level
+     * Formula: level * 100
+     */
+    private function calculateXpToNextLevel(int $level): int
+    {
+        return $level * 100;
+    }
+
+    /**
+     * Calculate remaining xp needed to reach next level
+     * Formula: (level * 100) - currentXp
+     */
+    private function calculateRemainingXp(int $level, int $currentXp): int
+    {
+        return $this->calculateXpToNextLevel($level) - $currentXp;
     }
 
     /**
@@ -38,12 +58,13 @@ class PetService
         $pet->setSpecies($species);
         $pet->setLevel(1);
         $pet->setXp(0);
-        $pet->setXpToNextLevel(100);
-        $pet->setHunger(50);
-        $pet->setHappiness(50);
+        $pet->setXpToNextLevel($this->calculateRemainingXp(1, 0));
+        $pet->setHunger(100);
+        $pet->setHappiness(100);
         $pet->setHealth(100);
         $pet->setEnergy(100);
         $pet->setIsAlive(true);
+        // lastInteractedAt is nullable, so we don't set it here
 
         $this->entityManager->persist($pet);
         $this->entityManager->flush();
@@ -60,15 +81,17 @@ class PetService
             throw new \Exception('Cannot feed a dead pet');
         }
 
-        $pet->setHunger($pet->getHunger() - $effectValue);
+        $pet->setHunger(min(100, $pet->getHunger() + $effectValue));
         $pet->setLastInteractedAt(new \DateTimeImmutable());
 
         $xpEarned = 10;
         $pet->setXp($pet->getXp() + $xpEarned);
+        $pet->setXpToNextLevel($pet->getXpToNextLevel() - $xpEarned);
 
         $this->checkLevelUp($pet);
+        $this->checkDeath($pet);
 
-        $careAction = $this->careActionService->logAction($pet, $performer, ActionTypeEnum::FEED, -$effectValue, $xpEarned);
+        $careAction = $this->careActionService->logAction($pet, $performer, ActionTypeEnum::FEED, $effectValue, $xpEarned);
 
         $this->entityManager->flush();
 
@@ -93,10 +116,12 @@ class PetService
         $pet->setHunger($pet->getHunger() + 5);
         $pet->setLastInteractedAt(new \DateTimeImmutable());
 
-        $xpEarned = 15;
+        $xpEarned = 10;
         $pet->setXp($pet->getXp() + $xpEarned);
+        $pet->setXpToNextLevel($pet->getXpToNextLevel() - $xpEarned);
 
         $this->checkLevelUp($pet);
+        $this->checkDeath($pet);
 
         $careAction = $this->careActionService->logAction($pet, $performer, ActionTypeEnum::PLAY, $effectValue, $xpEarned);
 
@@ -117,10 +142,12 @@ class PetService
         $pet->setHealth($pet->getHealth() + $effectValue);
         $pet->setLastInteractedAt(new \DateTimeImmutable());
 
-        $xpEarned = 20;
+        $xpEarned = 10;
         $pet->setXp($pet->getXp() + $xpEarned);
+        $pet->setXpToNextLevel($pet->getXpToNextLevel() - $xpEarned);
 
         $this->checkLevelUp($pet);
+        $this->checkDeath($pet);
 
         $careAction = $this->careActionService->logAction($pet, $performer, ActionTypeEnum::HEAL, $effectValue, $xpEarned);
 
@@ -132,7 +159,7 @@ class PetService
     /**
      * Let pet sleep
      */
-    public function sleepPet(Pet $pet, User $performer, int $effectValue = 40): CareAction
+    public function sleepPet(Pet $pet, User $performer, int $effectValue = 50): CareAction
     {
         if (!$pet->isAlive()) {
             throw new \Exception('Cannot make a dead pet sleep');
@@ -141,10 +168,12 @@ class PetService
         $pet->setEnergy($pet->getEnergy() + $effectValue);
         $pet->setLastInteractedAt(new \DateTimeImmutable());
 
-        $xpEarned = 5;
+        $xpEarned = 10;
         $pet->setXp($pet->getXp() + $xpEarned);
+        $pet->setXpToNextLevel($pet->getXpToNextLevel() - $xpEarned);
 
         $this->checkLevelUp($pet);
+        $this->checkDeath($pet);
 
         $careAction = $this->careActionService->logAction($pet, $performer, ActionTypeEnum::SLEEP, $effectValue, $xpEarned);
 
@@ -167,10 +196,12 @@ class PetService
         $pet->setEnergy($pet->getEnergy() - 10);
         $pet->setLastInteractedAt(new \DateTimeImmutable());
 
-        $xpEarned = 12;
+        $xpEarned = 10;
         $pet->setXp($pet->getXp() + $xpEarned);
+        $pet->setXpToNextLevel($pet->getXpToNextLevel() - $xpEarned);
 
         $this->checkLevelUp($pet);
+        $this->checkDeath($pet);
 
         $careAction = $this->careActionService->logAction($pet, $performer, ActionTypeEnum::BATHE, $effectValue, $xpEarned);
 
@@ -181,13 +212,36 @@ class PetService
 
     /**
      * Check if pet should level up
+     * When xp reaches the threshold for the current level, pet levels up
      */
     private function checkLevelUp(Pet $pet): void
     {
-        while ($pet->getXp() >= $pet->getXpToNextLevel()) {
+        $currentLevelThreshold = $this->calculateXpToNextLevel($pet->getLevel());
+        
+        while ($pet->getXp() >= $currentLevelThreshold) {
+            $overflow = $pet->getXp() - $currentLevelThreshold;
+            
+            // Level up
             $pet->setLevel($pet->getLevel() + 1);
-            $pet->setXp($pet->getXp() - $pet->getXpToNextLevel());
-            $pet->setXpToNextLevel((int)($pet->getXpToNextLevel() * 1.1));
+            $pet->setXp($overflow);
+            
+            // Update threshold for the new level
+            $currentLevelThreshold = $this->calculateXpToNextLevel($pet->getLevel());
+        }
+        
+        // Always ensure xpToNextLevel is synced
+        $pet->setXpToNextLevel($currentLevelThreshold - $pet->getXp());
+    }
+
+
+
+    /**
+     * Check if pet has died
+     */
+    private function checkDeath(Pet $pet): void
+    {
+        if ($pet->getHealth() <= 0) {
+            $pet->setIsAlive(false);
         }
     }
 
@@ -198,5 +252,53 @@ class PetService
     {
         $this->entityManager->remove($pet);
         $this->entityManager->flush();
+    }
+
+    /**
+     * Use an item on a pet (feed with FOOD, play with TOY, heal with MEDICINE)
+     * Note: Does NOT call flush() - caller must flush
+     */
+    public function useItemOnPet(Pet $pet, User $performer, Item $item): CareAction
+    {
+        if (!$pet->isAlive()) {
+            throw new \Exception('Cannot use item on a dead pet');
+        }
+
+        $itemType = $item->getType();
+        $effectValue = $item->getEffectValue();
+        $xpEarned = 10;
+
+        // Apply the item effect based on item type
+        switch ($itemType) {
+            case ItemTypeEnum::FOOD:
+                $pet->setHunger(min(100, $pet->getHunger() + $effectValue));
+                $actionType = ActionTypeEnum::FEED;
+                $statDelta = $effectValue;
+                break;
+            case ItemTypeEnum::TOY:
+                $pet->setHappiness(min(100, $pet->getHappiness() + $effectValue));
+                $pet->setEnergy(max(0, $pet->getEnergy() - $effectValue));
+                $actionType = ActionTypeEnum::PLAY;
+                $statDelta = $effectValue;
+                break;
+            case ItemTypeEnum::MEDICINE:
+                $pet->setHealth(min(100, $pet->getHealth() + $effectValue));
+                $actionType = ActionTypeEnum::HEAL;
+                $statDelta = $effectValue;
+                break;
+            default:
+                throw new \Exception('Item type not supported for pet interaction');
+        }
+
+        $pet->setLastInteractedAt(new \DateTimeImmutable());
+        $pet->setXp($pet->getXp() + $xpEarned);
+        $pet->setXpToNextLevel($pet->getXpToNextLevel() - $xpEarned);
+
+        $this->checkLevelUp($pet);
+        $this->checkDeath($pet);
+
+        $careAction = $this->careActionService->logAction($pet, $performer, $actionType, $statDelta, $xpEarned);
+
+        return $careAction;
     }
 }

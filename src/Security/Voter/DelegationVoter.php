@@ -11,12 +11,11 @@ class DelegationVoter extends Voter
 {
     public const VIEW = 'VIEW';
     public const REVOKE = 'REVOKE';
-    public const ACCEPT = 'ACCEPT';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
         return $subject instanceof Delegation && in_array($attribute, [
-            self::VIEW, self::REVOKE, self::ACCEPT
+            self::VIEW, self::REVOKE
         ]);
     }
 
@@ -33,7 +32,6 @@ class DelegationVoter extends Voter
         return match ($attribute) {
             self::VIEW => $this->canView($delegation, $user),
             self::REVOKE => $this->canRevoke($delegation, $user),
-            self::ACCEPT => $this->canAccept($delegation, $user),
             default => false,
         };
     }
@@ -53,13 +51,5 @@ class DelegationVoter extends Voter
     private function canRevoke(Delegation $delegation, User $user): bool
     {
         return $delegation->getOwner()->getId() === $user->getId();
-    }
-
-    /**
-     * Accepter une délégation : caretaker SEULEMENT
-     */
-    private function canAccept(Delegation $delegation, User $user): bool
-    {
-        return $delegation->getCaretaker()->getId() === $user->getId();
     }
 }

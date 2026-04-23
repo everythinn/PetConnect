@@ -2,8 +2,10 @@
 
 namespace App\Security;
 
+use App\Repository\UserRepository;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Exception\JWTEncodeFailureException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -17,6 +19,8 @@ class JwtAuthenticator extends AbstractAuthenticator
 {
     public function __construct(
         private readonly JWTEncoderInterface $jwtEncoder,
+        private readonly UserRepository $userRepository,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -34,18 +38,30 @@ class JwtAuthenticator extends AbstractAuthenticator
 
         try {
             $payload = $this->jwtEncoder->decode($token);
-        } catch (JWTEncodeFailureException|\Exception) {
+            $this->logger->info('JWT decoded successfully', ['email' => $payload['email'] ?? 'unknown']);
+        } catch (JWTEncodeFailureException|\Exception $e) {
+            $this->logger->error('JWT decode failed', ['error' => $e->getMessage()]);
             throw new AuthenticationException('Invalid JWT token');
         }
 
         $email = $payload['email'] ?? null;
 
         if (!$email) {
+            $this->logger->error('Email not found in JWT payload');
             throw new AuthenticationException('Invalid token payload');
         }
 
+        $user = $this->userRepository->findByEmail($email);
+        
+        if (!$user) {
+            $this->logger->error('User not found for email', ['email' => $email]);
+            throw new AuthenticationException('User not found');
+        }
+
+        $this->logger->info('User authenticated successfully', ['email' => $email]);
+
         return new SelfValidatingPassport(
-            new UserBadge($email)
+            new UserBadge($email, fn() => $user)
         );
     }
 
@@ -56,6 +72,11 @@ class JwtAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
-        return new Response('Invalid JWT token', Response::HTTP_UNAUTHORIZED);
+        $this->logger->error('Authentication failed', ['message' => $exception->getMessage()]);
+        return new Response(
+            json_encode(['error' => $exception->getMessage()]), 
+            Response::HTTP_UNAUTHORIZED,
+            ['Content-Type' => 'application/json']
+        );
     }
 }

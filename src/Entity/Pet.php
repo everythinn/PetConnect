@@ -47,11 +47,14 @@ class Pet
     #[ORM\Column]
     private int $energy = 100;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $lastInteractedAt = null;
 
     #[ORM\Column]
     private \DateTimeImmutable $bornAt;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastStatsDegradationAt = null;
 
     #[ORM\Column]
     private bool $isAlive = true;
@@ -219,6 +222,18 @@ class Pet
     public function getBornAt(): \DateTimeImmutable
     {
         return $this->bornAt;
+    }
+
+    public function getLastStatsDegradationAt(): ?\DateTimeImmutable
+    {
+        return $this->lastStatsDegradationAt;
+    }
+
+    public function setLastStatsDegradationAt(?\DateTimeImmutable $lastStatsDegradationAt): static
+    {
+        $this->lastStatsDegradationAt = $lastStatsDegradationAt;
+
+        return $this;
     }
 
     public function isAlive(): bool

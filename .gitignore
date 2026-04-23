@@ -1,4 +1,3 @@
-
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
@@ -8,17 +7,12 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
-
-###> lexik/jwt-authentication-bundle ###
-/config/jwt/*.pem
-###< lexik/jwt-authentication-bundle ###
-
-###> phpunit/phpunit ###
-/phpunit.xml
-/.phpunit.cache/
-###< phpunit/phpunit ###
 .env
 compose.yaml
 TEST_PLAN.md
 USEFUL_COMMANDS.md
 .env
+
+###> lexik/jwt-authentication-bundle ###
+/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###

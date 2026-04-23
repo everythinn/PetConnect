@@ -67,12 +67,15 @@ class AuthController extends AbstractController
             $user->setPassword($hashedPassword);
             $user->setRoles(['ROLE_USER']);
 
-            // Create inventory for user
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+            
+            // Create inventory for user after user is created
             $inventory = new Inventory();
             $inventory->setUser($user);
             $inventory->setItems([]);
-
-            $this->entityManager->persist($user);
+            $user->setInventory($inventory);
+            
             $this->entityManager->persist($inventory);
             $this->entityManager->flush();
 
@@ -88,7 +91,8 @@ class AuthController extends AbstractController
 
             return $this->json($response, Response::HTTP_CREATED);
         } catch (\Exception $e) {
-            return $this->json(['error' => 'An error occurred during registration'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            error_log('Registration error: ' . $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine());
+            return $this->json(['error' => 'An error occurred during registration: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
