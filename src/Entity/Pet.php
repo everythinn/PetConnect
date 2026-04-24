@@ -59,15 +59,9 @@ class Pet
     #[ORM\Column]
     private bool $isAlive = true;
 
-    /**
-     * @var Collection<int, CareAction>
-     */
     #[ORM\OneToMany(targetEntity: CareAction::class, mappedBy: 'pet', orphanRemoval: true)]
     private Collection $careActions;
 
-    /**
-     * @var Collection<int, Delegation>
-     */
     #[ORM\OneToMany(targetEntity: Delegation::class, mappedBy: 'pet', orphanRemoval: true)]
     private Collection $delegations;
 

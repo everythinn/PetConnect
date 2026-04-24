@@ -125,31 +125,25 @@ class PetController extends AbstractController
     #[Route('', methods: ['GET'])]
     public function getPets(#[CurrentUser] $user): JsonResponse
     {
-        // Get pets owned by the user
         $ownedPets = $this->petRepository->findByOwner($user);
 
-        // Get delegated pets with active delegations
         $delegatedPets = [];
         $delegations = $this->delegationRepository->findByCaretaker($user);
         
         foreach ($delegations as $delegation) {
-            // Only include pets where delegation is active
             if ($this->delegationService->calculateDelegationStatus($delegation) === DelegationStatusEnum::ACTIVE) {
                 $delegatedPets[] = $delegation->getPet();
             }
         }
 
-        // Combine both lists, avoiding duplicates
         $allPets = array_merge($ownedPets, $delegatedPets);
         $petIds = array_unique(array_map(fn($pet) => $pet->getId(), $allPets));
         $pets = array_filter($allPets, function($pet, $key) use ($petIds) {
             return array_search($pet->getId(), $petIds) === $key;
         }, ARRAY_FILTER_USE_BOTH);
 
-        // Reset keys to ensure proper JSON array encoding
         $pets = array_values($pets);
 
-        // Degrade stats for each pet
         foreach ($pets as $pet) {
             $this->statDegradationService->degradeStats($pet);
         }
@@ -176,15 +170,12 @@ class PetController extends AbstractController
             return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Check if user can view this pet
         $this->denyAccessUnlessGranted(PetVoter::VIEW, $pet);
 
-        // Check if pet is alive
         if (!$pet->isAlive()) {
             return $this->json(['error' => 'Pet is dead and cannot be accessed'], Response::HTTP_GONE);
         }
 
-        // Degrade stats
         $this->statDegradationService->degradeStats($pet);
 
         $response = $this->buildPetResponse($pet);
@@ -200,7 +191,6 @@ class PetController extends AbstractController
             return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Check if user can delete this pet (owner only)
         $this->denyAccessUnlessGranted(PetVoter::DELETE, $pet);
 
         $this->petService->deletePet($pet);

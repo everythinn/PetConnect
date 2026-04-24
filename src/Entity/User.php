@@ -33,27 +33,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
-    /**
-     * @var Collection<int, Pet>
-     */
     #[ORM\OneToMany(targetEntity: Pet::class, mappedBy: 'owner', orphanRemoval: true)]
     private Collection $pets;
 
-    /**
-     * @var Collection<int, CareAction>
-     */
     #[ORM\OneToMany(targetEntity: CareAction::class, mappedBy: 'performer')]
     private Collection $careActionsPerformed;
 
-    /**
-     * @var Collection<int, Delegation>
-     */
     #[ORM\OneToMany(targetEntity: Delegation::class, mappedBy: 'owner')]
     private Collection $delegationsAsOwner;
 
-    /**
-     * @var Collection<int, Delegation>
-     */
     #[ORM\OneToMany(targetEntity: Delegation::class, mappedBy: 'caretaker')]
     private Collection $delegationsAsCaretaker;
 
@@ -130,9 +118,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->createdAt;
     }
 
-    /**
-     * @return Collection<int, Pet>
-     */
     public function getPets(): Collection
     {
         return $this->pets;
@@ -159,9 +144,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, CareAction>
-     */
     public function getCareActionsPerformed(): Collection
     {
         return $this->careActionsPerformed;
@@ -188,9 +170,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, Delegation>
-     */
     public function getDelegationsAsOwner(): Collection
     {
         return $this->delegationsAsOwner;

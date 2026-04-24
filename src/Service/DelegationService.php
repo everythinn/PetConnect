@@ -17,17 +17,13 @@ class DelegationService
     ) {
     }
 
-    /**
-     * Create a delegation
-     * If start date is today or earlier, delegation is created as ACTIVE
-     */
+    // create a delegation
     public function createDelegation(Pet $pet, User $owner, User $caretaker, \DateTimeImmutable $startDate, \DateTimeImmutable $endDate): Delegation
     {
         if ($endDate <= $startDate) {
             throw new \Exception('End date must be after start date');
         }
 
-        // Determine initial status based on start date
         $initialStatus = $this->calculateInitialStatus($startDate, $endDate);
 
         $delegation = new Delegation();
@@ -44,18 +40,14 @@ class DelegationService
         return $delegation;
     }
 
-    /**
-     * Calculate initial status for a new delegation based on dates
-     */
+    // find initial status for delegation basd on start date
     private function calculateInitialStatus(\DateTimeImmutable $startDate, \DateTimeImmutable $endDate): DelegationStatusEnum
     {
         $nowDate = (new \DateTimeImmutable())->format('Y-m-d');
         $startStr = $startDate->format('Y-m-d');
         $endStr = $endDate->format('Y-m-d');
 
-        // If start date is today or earlier, check if end date is still in future
         if ($startStr <= $nowDate) {
-            // Check if end date has already passed
             if ($endStr < $nowDate) {
                 return DelegationStatusEnum::EXPIRED;
             }
@@ -65,12 +57,9 @@ class DelegationService
         return DelegationStatusEnum::PENDING;
     }
 
-    /**
-     * Calculate the appropriate status for a delegation based on current time
-     */
+    // same + time
     public function calculateDelegationStatus(Delegation $delegation): DelegationStatusEnum
     {
-        // If explicitly revoked, stay revoked
         if ($delegation->getStatus() === DelegationStatusEnum::REVOKED) {
             return DelegationStatusEnum::REVOKED;
         }
@@ -79,23 +68,18 @@ class DelegationService
         $startDate = $delegation->getStartDate()->format('Y-m-d');
         $endDate = $delegation->getEndDate()->format('Y-m-d');
 
-        // Check if delegation has passed its end date
         if ($nowDate > $endDate) {
             return DelegationStatusEnum::EXPIRED;
         }
 
-        // Check if delegation hasn't started yet
         if ($nowDate < $startDate) {
             return DelegationStatusEnum::PENDING;
         }
 
-        // Between start and end date (inclusive)
         return DelegationStatusEnum::ACTIVE;
     }
 
-    /**
-     * Update a delegation's status based on current time
-     */
+    // update status based on time
     public function updateDelegationStatus(Delegation $delegation): void
     {
         $newStatus = $this->calculateDelegationStatus($delegation);
@@ -106,9 +90,7 @@ class DelegationService
         }
     }
 
-    /**
-     * Revoke a delegation (owner)
-     */
+    // revoke delegation
     public function revokeDelegation(Delegation $delegation): void
     {
         if ($delegation->getStatus() === DelegationStatusEnum::REVOKED) {
@@ -123,17 +105,13 @@ class DelegationService
         $this->entityManager->flush();
     }
 
-    /**
-     * Check if a delegation is active (based on status and dates)
-     */
+    // check if delegation is active
     public function isDelegationActive(Delegation $delegation): bool
     {
         return $this->calculateDelegationStatus($delegation) === DelegationStatusEnum::ACTIVE;
     }
 
-    /**
-     * Get active delegation for pet and user
-     */
+    // get active delegation for pet and user
     public function getActiveDelegationForCaretaker(Pet $pet, User $caretaker): ?Delegation
     {
         $delegations = $this->delegationRepository->findBy([

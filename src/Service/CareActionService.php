@@ -17,9 +17,7 @@ class CareActionService
     ) {
     }
 
-    /**
-     * Log a care action
-     */
+    // log a care action
     public function logAction(Pet $pet, User $performer, ActionTypeEnum $actionType, int $statDelta, int $xpEarned): CareAction
     {
         $careAction = new CareAction();
@@ -34,9 +32,7 @@ class CareActionService
         return $careAction;
     }
 
-    /**
-     * Get care history for a pet
-     */
+    // get care history for a pet
     public function getPetCareHistory(Pet $pet, int $limit = 10): array
     {
         return $this->careActionRepository->findBy(

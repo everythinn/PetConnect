@@ -23,30 +23,21 @@ class PetService
     ) {
     }
 
-    /**
-     * Calculate xp needed to reach next level
-     * Formula: level * 100
-     */
+    // calculate xp needed to reach next level
     private function calculateXpToNextLevel(int $level): int
     {
         return $level * 100;
     }
 
-    /**
-     * Calculate remaining xp needed to reach next level
-     * Formula: (level * 100) - currentXp
-     */
+    // alculate remaining xp needed to reach next level
     private function calculateRemainingXp(int $level, int $currentXp): int
     {
         return $this->calculateXpToNextLevel($level) - $currentXp;
     }
 
-    /**
-     * Adopt a new pet
-     */
+    // adopt new pet
     public function adoptPet(User $owner, string $name, SpeciesEnum $species): Pet
     {
-        // Check if owner has reached max pets
         $petCount = count($this->petRepository->findByOwner($owner));
         if ($petCount >= self::MAX_PETS_PER_USER) {
             throw new \Exception('Maximum number of pets reached');
@@ -64,7 +55,6 @@ class PetService
         $pet->setHealth(100);
         $pet->setEnergy(100);
         $pet->setIsAlive(true);
-        // lastInteractedAt is nullable, so we don't set it here
 
         $this->entityManager->persist($pet);
         $this->entityManager->flush();
@@ -72,9 +62,7 @@ class PetService
         return $pet;
     }
 
-    /**
-     * Feed a pet
-     */
+    // feed pet
     public function feedPet(Pet $pet, User $performer, int $effectValue = 20): CareAction
     {
         if (!$pet->isAlive()) {
@@ -98,9 +86,7 @@ class PetService
         return $careAction;
     }
 
-    /**
-     * Play with a pet
-     */
+    // Play with pet
     public function playWithPet(Pet $pet, User $performer, int $effectValue = 15): CareAction
     {
         if (!$pet->isAlive()) {
@@ -130,9 +116,7 @@ class PetService
         return $careAction;
     }
 
-    /**
-     * Heal a pet
-     */
+    // Heal pet
     public function healPet(Pet $pet, User $performer, int $effectValue = 30): CareAction
     {
         if (!$pet->isAlive() && $pet->getHealth() <= 0) {
@@ -156,9 +140,7 @@ class PetService
         return $careAction;
     }
 
-    /**
-     * Let pet sleep
-     */
+    // Let pet sleep
     public function sleepPet(Pet $pet, User $performer, int $effectValue = 50): CareAction
     {
         if (!$pet->isAlive()) {
@@ -182,38 +164,9 @@ class PetService
         return $careAction;
     }
 
-    /**
-     * Bathe a pet
-     */
-    public function bathePet(Pet $pet, User $performer, int $effectValue = 25): CareAction
-    {
-        if (!$pet->isAlive()) {
-            throw new \Exception('Cannot bathe a dead pet');
-        }
 
-        $pet->setHealth($pet->getHealth() + $effectValue);
-        $pet->setHappiness($pet->getHappiness() + 10);
-        $pet->setEnergy($pet->getEnergy() - 10);
-        $pet->setLastInteractedAt(new \DateTimeImmutable());
 
-        $xpEarned = 10;
-        $pet->setXp($pet->getXp() + $xpEarned);
-        $pet->setXpToNextLevel($pet->getXpToNextLevel() - $xpEarned);
-
-        $this->checkLevelUp($pet);
-        $this->checkDeath($pet);
-
-        $careAction = $this->careActionService->logAction($pet, $performer, ActionTypeEnum::BATHE, $effectValue, $xpEarned);
-
-        $this->entityManager->flush();
-
-        return $careAction;
-    }
-
-    /**
-     * Check if pet should level up
-     * When xp reaches the threshold for the current level, pet levels up
-     */
+    // check if pet should level up
     private function checkLevelUp(Pet $pet): void
     {
         $currentLevelThreshold = $this->calculateXpToNextLevel($pet->getLevel());
@@ -221,23 +174,18 @@ class PetService
         while ($pet->getXp() >= $currentLevelThreshold) {
             $overflow = $pet->getXp() - $currentLevelThreshold;
             
-            // Level up
             $pet->setLevel($pet->getLevel() + 1);
             $pet->setXp($overflow);
             
-            // Update threshold for the new level
             $currentLevelThreshold = $this->calculateXpToNextLevel($pet->getLevel());
         }
         
-        // Always ensure xpToNextLevel is synced
         $pet->setXpToNextLevel($currentLevelThreshold - $pet->getXp());
     }
 
 
 
-    /**
-     * Check if pet has died
-     */
+    // Check if pet has died
     private function checkDeath(Pet $pet): void
     {
         if ($pet->getHealth() <= 0) {
@@ -245,19 +193,14 @@ class PetService
         }
     }
 
-    /**
-     * Delete a pet
-     */
+    // Delete a pet
     public function deletePet(Pet $pet): void
     {
         $this->entityManager->remove($pet);
         $this->entityManager->flush();
     }
 
-    /**
-     * Use an item on a pet (feed with FOOD, play with TOY, heal with MEDICINE)
-     * Note: Does NOT call flush() - caller must flush
-     */
+    // Use an item on a pet
     public function useItemOnPet(Pet $pet, User $performer, Item $item): CareAction
     {
         if (!$pet->isAlive()) {
@@ -268,7 +211,6 @@ class PetService
         $effectValue = $item->getEffectValue();
         $xpEarned = 10;
 
-        // Apply the item effect based on item type
         switch ($itemType) {
             case ItemTypeEnum::FOOD:
                 $pet->setHunger(min(100, $pet->getHunger() + $effectValue));

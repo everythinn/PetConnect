@@ -41,7 +41,6 @@ class AuthController extends AbstractController
                 confirmPassword: $data['confirmPassword'] ?? '',
             );
 
-            // Validate input
             if (empty($registerDTO->email) || empty($registerDTO->username) || empty($registerDTO->password)) {
                 return $this->json(['error' => 'Email, username, and password are required'], Response::HTTP_BAD_REQUEST);
             }
@@ -54,12 +53,10 @@ class AuthController extends AbstractController
                 return $this->json(['error' => 'Password must be at least 6 characters'], Response::HTTP_BAD_REQUEST);
             }
 
-            // Check if email already exists
             if ($this->userRepository->findByEmail($registerDTO->email)) {
                 return $this->json(['error' => 'Email already in use'], Response::HTTP_CONFLICT);
             }
 
-            // Create new user
             $user = new User();
             $user->setEmail($registerDTO->email);
             $user->setUsername($registerDTO->username);
@@ -70,7 +67,6 @@ class AuthController extends AbstractController
             $this->entityManager->persist($user);
             $this->entityManager->flush();
             
-            // Create inventory for user after user is created
             $inventory = new Inventory();
             $inventory->setUser($user);
             $inventory->setItems([]);
@@ -79,7 +75,6 @@ class AuthController extends AbstractController
             $this->entityManager->persist($inventory);
             $this->entityManager->flush();
 
-            // Generate JWT token
             $token = $this->jwtManager->create($user);
 
             $response = new AuthResponseDTO(
@@ -119,7 +114,6 @@ class AuthController extends AbstractController
                 return $this->json(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
             }
 
-            // Generate JWT token
             $token = $this->jwtManager->create($user);
 
             $response = new AuthResponseDTO(

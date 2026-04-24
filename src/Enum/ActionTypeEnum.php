@@ -8,5 +8,4 @@ enum ActionTypeEnum: string
     case PLAY = 'play';
     case HEAL = 'heal';
     case SLEEP = 'sleep';
-    case BATHE = 'bathe';
 }

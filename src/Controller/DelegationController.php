@@ -77,13 +77,11 @@ class DelegationController extends AbstractController
 
             $startDate = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $startDateStr);
             if (!$startDate) {
-                // Try ISO format (from datetime-local input)
                 $startDate = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $startDateStr);
             }
             
             $endDate = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $endDateStr);
             if (!$endDate) {
-                // Try ISO format (from datetime-local input)
                 $endDate = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $endDateStr);
             }
 
@@ -105,7 +103,6 @@ class DelegationController extends AbstractController
         $delegationsAsOwner = $this->delegationRepository->findByOwner($user);
         $delegationsAsCaretaker = $this->delegationRepository->findByCaretaker($user);
 
-        // Update status for all delegations based on current date
         $allUnique = array_unique(array_merge($delegationsAsOwner, $delegationsAsCaretaker), SORT_REGULAR);
         foreach ($allUnique as $delegation) {
             $this->delegationService->updateDelegationStatus($delegation);
@@ -133,7 +130,6 @@ class DelegationController extends AbstractController
             return $this->json(['valid' => false]);
         }
 
-        // Cannot delegate to oneself
         if ($caretaker->getId() === $user->getId()) {
             return $this->json(['valid' => false, 'error' => 'Cannot delegate to yourself']);
         }
@@ -151,7 +147,6 @@ class DelegationController extends AbstractController
                 return $this->json(['error' => 'Delegation not found'], Response::HTTP_NOT_FOUND);
             }
 
-            // Check if user can cancel this delegation (owner only)
             $this->denyAccessUnlessGranted(DelegationVoter::REVOKE, $delegation);
 
             $this->delegationService->revokeDelegation($delegation);

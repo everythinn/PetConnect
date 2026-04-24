@@ -36,18 +36,14 @@ class DelegationVoter extends Voter
         };
     }
 
-    /**
-     * Voir une délégation : owner OU caretaker
-     */
+    
     private function canView(Delegation $delegation, User $user): bool
     {
         return $delegation->getOwner()->getId() === $user->getId() ||
                $delegation->getCaretaker()->getId() === $user->getId();
     }
 
-    /**
-     * Révoquer une délégation : owner SEULEMENT
-     */
+    
     private function canRevoke(Delegation $delegation, User $user): bool
     {
         return $delegation->getOwner()->getId() === $user->getId();

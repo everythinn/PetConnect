@@ -1,3 +1,0 @@
-# PetConnect
-
-PetConnect est une application web de simulation d'animaux de compagnie virtuels qui permet à tout utilisateur inscrit d'adopter un ou plusieurs animaux virtuels, de les élever en interagissant quotidiennement avec eux (nourrir, jouer, soigner…), et de confier temporairement leur soin à un autre utilisateur de confiance pendant une période définie — notamment lors de vacances ou d'absences. L'application cible un usage récréatif et accessible, sans prérequis techniques. Le public cible se compose de personnes souhaitant s'occuper d'un animal virtuel sans contraintes du monde réel. 

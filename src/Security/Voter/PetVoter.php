@@ -49,33 +49,31 @@ class PetVoter extends Voter
 
         $pet = $subject;
 
-        // Propriétaire du pet peut tout faire
+        
         if ($pet->getOwner()->getId() === $user->getId()) {
             return true;
         }
 
-        // Pour VIEW et les soins, vérifier si une délégation active existe
+        
         if ($attribute === self::VIEW || in_array($attribute, $this->careActions)) {
             return $this->hasActiveDelegation($pet, $user);
         }
 
-        // Pour autres actions (DELETE, EDIT), seul le propriétaire peut
+        
         return false;
     }
 
-    /**
-     * Vérifier si l'utilisateur a une délégation ACTIVE pour ce pet
-     */
+    
     private function hasActiveDelegation(Pet $pet, User $user): bool
     {
-        // Chercher une délégation pour ce pet avec cet utilisateur comme caretaker
+        
         $delegations = $this->delegationRepository->findBy([
             'pet' => $pet,
             'caretaker' => $user,
         ]);
 
         foreach ($delegations as $delegation) {
-            // Vérifier que la délégation est active (en se basant sur les dates et le statut)
+            
             if ($this->delegationService->calculateDelegationStatus($delegation) === DelegationStatusEnum::ACTIVE) {
                 return true;
             }

@@ -16,9 +16,7 @@ class InventoryService
     ) {
     }
 
-    /**
-     * Get or create inventory for user
-     */
+    // get or create inventory
     public function getOrCreateInventory(User $user): Inventory
     {
         $inventory = $this->inventoryRepository->findByUser($user);
@@ -34,9 +32,7 @@ class InventoryService
         return $inventory;
     }
 
-    /**
-     * Add item to inventory
-     */
+
     public function addItem(User $user, int $itemId, int $quantity = 1): void
     {
         $inventory = $this->getOrCreateInventory($user);
@@ -44,9 +40,7 @@ class InventoryService
         $this->entityManager->flush();
     }
 
-    /**
-     * Remove item from inventory
-     */
+
     public function removeItem(User $user, int $itemId, int $quantity = 1): bool
     {
         $inventory = $this->getOrCreateInventory($user);
@@ -61,9 +55,7 @@ class InventoryService
         return true;
     }
 
-    /**
-     * Check if user has item
-     */
+
     public function hasItem(User $user, int $itemId, int $quantity = 1): bool
     {
         $inventory = $this->getOrCreateInventory($user);
@@ -71,9 +63,7 @@ class InventoryService
         return $inventory->hasItem($itemId, $quantity);
     }
 
-    /**
-     * Get item quantity
-     */
+
     public function getItemQuantity(User $user, int $itemId): int
     {
         $inventory = $this->getOrCreateInventory($user);
@@ -81,9 +71,7 @@ class InventoryService
         return $inventory->getItemQuantity($itemId);
     }
 
-    /**
-     * Use an item on a pet
-     */
+
     public function useItem(User $user, Item $item, int $quantity = 1): bool
     {
         return $this->removeItem($user, $item->getId(), $quantity);

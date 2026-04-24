@@ -6,9 +6,7 @@ use App\Entity\CareAction;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<CareAction>
- */
+
 class CareActionRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

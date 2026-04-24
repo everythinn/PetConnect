@@ -4,9 +4,7 @@ namespace App\DTO;
 
 class PetResponseDTO
 {
-    /**
-     * @param CareActionResponseDTO[] $careActions
-     */
+    
     public function __construct(
         public readonly int $id,
         public readonly string $name,

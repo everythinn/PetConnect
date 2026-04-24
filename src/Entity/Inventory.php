@@ -49,10 +49,6 @@ class Inventory
         return $this;
     }
 
-    /**
-     * Add an item to inventory
-     * Format: ['itemId' => quantity, ...]
-     */
     public function addItem(int $itemId, int $quantity = 1): static
     {
         $this->items[$itemId] = ($this->items[$itemId] ?? 0) + $quantity;
@@ -60,9 +56,6 @@ class Inventory
         return $this;
     }
 
-    /**
-     * Remove an item from inventory
-     */
     public function removeItem(int $itemId, int $quantity = 1): static
     {
         if (isset($this->items[$itemId])) {
@@ -75,17 +68,11 @@ class Inventory
         return $this;
     }
 
-    /**
-     * Get item quantity
-     */
     public function getItemQuantity(int $itemId): int
     {
         return $this->items[$itemId] ?? 0;
     }
 
-    /**
-     * Check if user has enough items
-     */
     public function hasItem(int $itemId, int $quantity = 1): bool
     {
         return ($this->items[$itemId] ?? 0) >= $quantity;

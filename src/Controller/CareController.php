@@ -38,7 +38,6 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            // Check if user can feed this pet (owner or active caretaker)
             $this->denyAccessUnlessGranted(PetVoter::FEED, $pet);
 
             $this->petService->feedPet($pet, $user);
@@ -59,7 +58,6 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            // Check if user can play with this pet (owner or active caretaker)
             $this->denyAccessUnlessGranted(PetVoter::PLAY, $pet);
 
             $this->petService->playWithPet($pet, $user);
@@ -80,7 +78,6 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            // Check if user can heal this pet (owner or active caretaker)
             $this->denyAccessUnlessGranted(PetVoter::HEAL, $pet);
 
             $this->petService->healPet($pet, $user);
@@ -101,7 +98,6 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            // Check if user can make pet sleep (owner or active caretaker)
             $this->denyAccessUnlessGranted(PetVoter::SLEEP, $pet);
 
             $this->petService->sleepPet($pet, $user);
@@ -122,7 +118,6 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            // Check if user can bathe this pet (owner or active caretaker)
             $this->denyAccessUnlessGranted(PetVoter::BATHE, $pet);
 
             $this->petService->bathePet($pet, $user);
@@ -143,7 +138,6 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Pet not found'], Response::HTTP_NOT_FOUND);
             }
 
-            // Check if user can view this pet's inventory
             $this->denyAccessUnlessGranted(PetVoter::VIEW, $pet);
 
             $typeStr = $request->query->get('type');
@@ -157,13 +151,11 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Invalid item type'], Response::HTTP_BAD_REQUEST);
             }
 
-            // Get user's inventory
             $inventory = $this->inventoryRepository->findByUser($user);
             if (!$inventory) {
                 return $this->json([]);
             }
 
-            // Get items of the specified type that the user has in inventory
             $userItemIds = array_keys($inventory->getItems());
             $items = [];
 
@@ -215,10 +207,8 @@ class CareController extends AbstractController
                 return $this->json(['error' => 'Item not in inventory'], Response::HTTP_BAD_REQUEST);
             }
 
-            // Use the item on the pet
             $this->petService->useItemOnPet($pet, $user, $item);
 
-            // Remove item from inventory
             $inventory->removeItem($itemId, 1);
             $this->entityManager->flush();
 
